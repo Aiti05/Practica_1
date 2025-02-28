@@ -1,10 +1,10 @@
 ## **Practica 1: BLINK**
 
-Introducción de la práctica
-En esta primera práctica junto con el microcontrolador ESP32 y un led, tendremos como objetivo producir el parpadeo del LED.
+En esta primera practica tendremos que producir un parpadeo en el LED a a partir del microprocesador ESP32-S3.
 
 ## **1. Codigo Básico:**
 
+**Codigo main.cpp:**
 ```
 #define LED_BUILTIN 2
 #define DELAY 500
@@ -22,6 +22,7 @@ void loop() {
 
 ## **2. Modificar el programa (ON, OFF):**
 
+**Codigo main.cpp:**
 ```
 #include <Arduino.h>
 
@@ -48,14 +49,15 @@ delay(DELAY);
 }
 ```
 
-En este código modificado hemos añadido los puertos de salida ON y OFF, 
-con las funciones sugeridas en la práctica (Serial.printIN), aparte de esta
-modificación tambien se ha cambiado el tiempo de espera del LED de 500 a
-1000 milisegundos.
+En este segundo programa ses han agregado dos puertos de salida, el puerto ON  y el puerto OFF,
+esto lo hemos hecho con las funciones que enunciaba la practica, las Serial.printIN. Ademas tambien se ha modificado el tiempo de espera del LED, que en el
+anterior apartado era de 500 milisegundos y en este ha pasado a ser de 1000 milisegundos.
+
 
 
 ## **3. Modificar programa para que actue en los registros de entrada de salida:**
 
+**Codigo main.cpp:**
 ```
 #include <Arduino.h>
 
@@ -88,21 +90,21 @@ void loop() {
 }
 ```
 
-En este código proporcionado, se ha modificado respecto a los anteriores, para
-que haga la función de actuar sobre los registros de entrada y salida, el código
-ha sido diseñado con las sugerencias añadidas que hacen referencia a gpio_out.
+En este tercer codigo se ha cambiado para actuar en los registros de entrada y salida, 
+y se ha hecho a partir de las instrucciones de la pracica de gpio_out.
 
 
 ## **4. Medir frecuencia máxima:**
 
-En este cuarto apartado de la práctica modificaremos el Pin de la salida a otro
-que esté libre y con la ayuda de un osciloscopio mediremos la frecuencia
-máxima de apagado y encendido que nos marque. Mediremos la frecuencia en
-4 ocasiones distintas:
-
+En este l que hemos hecho es cambiar el pin de salida por otro que este libre y después con el osciloscopio medimos la frequencia máxima de apagado y encendido. Estas frequencias las tomaremos en cuatro casos diferentes: 
+· Con el envio por el puerto série del mensaje i utilizando las funciones de Arduino
+· Con el envio por el puerto série y accedirendo directamente a los registros
+· Sin el envio por el puerto série del mensaje i utilizando las funciones de Arduino
+· Sin el envio por el puerto série y accedirendo directamente a los registros
 
 ### **4.1 Con el envio por puerto série del mensaje y utilizando las funciones del Arduino:**
 
+**Codigo main.cpp:**
 ```
  #include <Arduino.h>
 
@@ -121,12 +123,12 @@ máxima de apagado y encendido que nos marque. Mediremos la frecuencia en
    }
 ```
 
-Hemos definido el pin de salida en el pin 14, respecto a la frecuencia registrada
-en el osciloscopio es de 29.81 Khz.
+Ponemos como salida el **pin 14**, y en este caso como frquencia del osciloscopio tenemos ***29.81 Khz**.
 
 
 ### **4.2 - Con el envio por puerto série y accediendo directamente a los registros:**
 
+**Codigo main.cpp:**
 ```
  #include <Arduino.h>
 
@@ -145,12 +147,12 @@ en el osciloscopio es de 29.81 Khz.
       *gpio_out ^= (1 << led);
    }
 ```
+Aqui tenemos como pin de salida el pin **14**, y la frquencia que obtenemos del osciloscopio es de ***29.77 Khz**.
 
-En este caso anterior con el pin de salida en el 14, hay registrada una frecuencia
-de 29.77 Khz.
 
 ### **4.3 - Sin el envio por el puerto série del mensaje i utilizando las funciones de Arduino:**
 
+**Codigo main.cpp:**
 ```
 #include <Arduino.h>
 int led = 14; 
@@ -165,10 +167,11 @@ void loop() {
 }
 ```
 
-En este tercer caso se registra una frecuencia en el osciloscopio de 1.72 Mhz.
+En este caso la frequencia registrada del osciloscopio es de **1.72 Mhz**.
 
 ### **4.4 - Sin el envio por el puerto série y accedirendo directamente a los registros:**
 
+**Codigo main.cpp:**
 ```
 #include <Arduino.h>
 
@@ -185,20 +188,52 @@ void loop() {
 }
 ```
 
-Y en este último caso se registra una frecuencia de 4.701 Mhz en el osciloscopio.
+Y en este último caso la frecuencia del osciloscopio es de **4.701 Mhz**.
 
 
 ## **5. Diagrama de flujo i diagrama de tiempo:**
-
-A continuación se proporciona el diagrama de flujo i el diagrama de tiempos,
-tomando como ejemplo el código básico proporcionado en el punto 1 de esta práctica.
 
 
 ### **5.1 - Diagrama de flujo:**
 
 
+```mermaid
+graph TD;
+    A[Inicio] --> |Inicio| B[Setup];
+    B[Setup] --> |Indicar salida| C{led encendido};
+    C{led encendido} --> |Encendido| D[Delay 500ms];
+    D[Delay 500ms] --> |Apagar| E{led apagado};
+    E{led apagado} --> |Delay| D[Delay 500ms];
+    E{led apagado} --> |Repetir| F[Finalizar];
+
+```
+En este diagrama de flujo vemos que primero se inicia y se especifica la salida, después al encenderse el led pasa el tiempo del delay y se apaga, y una vez que ya se ha apagado vuelve a pasar el mismo tiempo de delay y el led se vuelve a encender.
 
 
+
+### **5.2- Diagrama de tiempo:**
+
+```mermaid
+sequenceDiagram
+    participant Arduino
+    participant LED
+    participant Delay
+
+    Arduino->>Arduino: #define LED_BUILTIN 2
+    Arduino->>Arduino: #define DELAY 500
+    Arduino->>LED: pinMode(LED_BUILTIN, PUERTO_SALIDA)
+    loop
+        Arduino->>LED: digitalWrite(LED_BUILTIN, ENCENDIDO)
+        Arduino->>Delay: delay(DELAY)
+        Arduino->>LED: digitalWrite(LED_BUILTIN, APAGADO)
+        Arduino->>Delay: delay(DELAY)
+    end
+
+```
+
+
+
+## **6. Tiempo libre del procesador:**
 
 
 
