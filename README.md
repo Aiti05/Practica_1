@@ -6,18 +6,21 @@ En esta primera practica tendremos que producir un parpadeo en el LED a a partir
 
 **Codigo main.cpp:**
 ```
-#define LED_BUILTIN 2
+#include <Arduino.h>
+#define LED_BUILTIN 48
 #define DELAY 500
 
-void setup() {
- pinMode(LED_BUILTIN, OUTPUT);
-}
-void loop() {
- digitalWrite(LED_BUILTIN, HIGH);
- delay(DELAY);
- digitalWrite(LED_BUILTIN, LOW);
- delay(DELAY);
-}
+
+ void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  }
+  void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(DELAY);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(DELAY);
+  }
+
 ```
 
 ## **2. Modificar el programa (ON, OFF):**
@@ -25,27 +28,31 @@ void loop() {
 **Codigo main.cpp:**
 ```
 #include <Arduino.h>
+#define LED_BUILTIN 48  // Pin del LED
+#define DELAY 1000      // Tiempo de espera en milisegundos
 
-#define LED_BUILTIN 23
-#define DELAY 1000 //ms
+
 
 
 void setup() {
-Serial.begin(115200); 
-pinMode(LED_BUILTIN, OUTPUT);
-
+    pinMode(LED_BUILTIN, OUTPUT);  // Configurar LED como salida
+    Serial.begin(115200);          // Inicializar comunicación serie
 }
 
+
+
+
 void loop() {
-    
-digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(LED_BUILTIN, HIGH);  // Encender LED
+    Serial.println("ON");             // Enviar mensaje por serie
+    delay(DELAY);                    
 
-Serial.println("ON"); 
-delay(DELAY);
-digitalWrite(LED_BUILTIN, LOW);
 
-Serial.println("OFF"); 
-delay(DELAY);
+
+
+    digitalWrite(LED_BUILTIN, LOW);   // Apagar LED
+    Serial.println("OFF");            // Enviar mensaje por serie
+    delay(DELAY);                    
 }
 ```
 
@@ -60,34 +67,45 @@ anterior apartado era de 500 milisegundos y en este ha pasado a ser de 1000 mili
 **Codigo main.cpp:**
 ```
 #include <Arduino.h>
-
-#define LED_BUILTIN 23
+#define LED_PIN 48
 #define DELAY 1000
 
-#define GPIO_OUT_REG 0x3FF4400C
+
+
 
 void setup() {
-  Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
+    // Configurar el pin como salida directamente en el hardware
+    gpio_pad_select_gpio(LED_PIN);
+    gpio_set_direction((gpio_num_t)LED_PIN, GPIO_MODE_OUTPUT);
+
+
+
+
+    // Inicializar el puerto serie
+    Serial.begin(115200);
 }
+
+
+
 
 void loop() {
-  volatile uint32_t *gpio_out = (volatile uint32_t *)GPIO_OUT_REG;
+    uint32_t *gpio_out = (uint32_t *)GPIO_OUT_REG; // Puntero al registro GPIO
 
-  *gpio_out |= (1 << LED_BUILTIN);
-  digitalWrite(LED_BUILTIN, HIGH);
 
-  Serial.println("ON");
-  
-  delay(DELAY);
 
-  *gpio_out ^= (1 << LED_BUILTIN);
-  digitalWrite(LED_BUILTIN, LOW);
 
-  Serial.println("OFF");
+    *gpio_out |= (1 << LED_PIN);  // Encender LED
+    Serial.println("ON");         // Mensaje serie
+    delay(DELAY);
 
-  delay(DELAY);
+
+
+
+    *gpio_out &= ~(1 << LED_PIN); // Apagar LED
+    Serial.println("OFF");        // Mensaje serie
+    delay(DELAY);
 }
+
 ```
 
 En este tercer codigo se ha cambiado para actuar en los registros de entrada y salida, 
@@ -101,94 +119,74 @@ En este l que hemos hecho es cambiar el pin de salida por otro que este libre y 
 · Con el envio por el puerto série y accedirendo directamente a los registros
 · Sin el envio por el puerto série del mensaje i utilizando las funciones de Arduino
 · Sin el envio por el puerto série y accedirendo directamente a los registros
+```
+#define LED_PIN 48  // Cambia el pin según disponibilidad
+
+
+
+
+void setup() {
+    Serial.begin(115200); // Iniciar puerto serie
+    gpio_pad_select_gpio(LED_PIN);
+    gpio_set_direction((gpio_num_t)LED_PIN, GPIO_MODE_OUTPUT);
+}
+
+
+
+
+void loop() {
+```
 
 ### **4.1 Con el envio por puerto série del mensaje y utilizando las funciones del Arduino:**
 
 **Codigo main.cpp:**
 ```
- #include <Arduino.h>
+ digitalWrite(LED_PIN, HIGH);
+ Serial.println("ON");
+ digitalWrite(LED_PIN, LOW);
+ Serial.println("OFF");
 
-   int led = 14; 
-
-   void setup() {                
-      pinMode(led, OUTPUT);   
-      Serial.begin(115200);
-   }
-
-   void loop() {
-      Serial.println("ON");
-      digitalWrite(led, HIGH);
-      Serial.println("OFF");      
-      digitalWrite(led, LOW);
-   }
 ```
 
-Ponemos como salida el **pin 14**, y en este caso como frquencia del osciloscopio tenemos ***29.81 Khz**.
+Ponemos como salida el **pin 48**, y en este caso como frquencia del osciloscopio tenemos **30 kHz**.
 
 
 ### **4.2 - Con el envio por puerto série y accediendo directamente a los registros:**
 
 **Codigo main.cpp:**
 ```
- #include <Arduino.h>
+  uint32_t *gpio_out = (uint32_t *)GPIO_OUT_REG;
+  *gpio_out |= (1 << LED_PIN);
+   Serial.println("ON");
+   *gpio_out &= ~(1 << LED_PIN);
+   Serial.println("OFF");
 
-   int led = 14;
-   uint32_t *gpio_out = (uint32_t *)GPIO_OUT_REG;
-
-   void setup() {                
-      pinMode(led, OUTPUT);   
-      Serial.begin(115200);
-   }
-
-   void loop() {
-      Serial.println("ON");
-      *gpio_out |= (1 << led);
-      Serial.println("OFF");      
-      *gpio_out ^= (1 << led);
-   }
 ```
-Aqui tenemos como pin de salida el pin **14**, y la frquencia que obtenemos del osciloscopio es de ***29.77 Khz**.
+Aqui tenemos como pin de salida el **pin 48**, y la frquencia que obtenemos del osciloscopio es de **30 kHz**.
 
 
 ### **4.3 - Sin el envio por el puerto série del mensaje i utilizando las funciones de Arduino:**
 
 **Codigo main.cpp:**
 ```
-#include <Arduino.h>
-int led = 14; 
+digitalWrite(LED_PIN, HIGH);
+digitalWrite(LED_PIN, LOW);
 
-void setup() {                
-   pinMode(led, OUTPUT);   
-}
-
-void loop() {
-   digitalWrite(led, HIGH);
-   digitalWrite(led, LOW);
-}
 ```
 
-En este caso la frequencia registrada del osciloscopio es de **1.72 Mhz**.
+En este caso la frequencia registrada del osciloscopio es de **1.7 MHz**.
 
 ### **4.4 - Sin el envio por el puerto série y accedirendo directamente a los registros:**
 
 **Codigo main.cpp:**
 ```
-#include <Arduino.h>
+ uint32_t *gpio_out = (uint32_t *)GPIO_OUT_REG;
+ *gpio_out |= (1 << LED_PIN);
+ *gpio_out &= ~(1 << LED_PIN);
 
-int led = 14; 
-uint32_t *gpio_out = (uint32_t *)GPIO_OUT_REG;
-
-void setup() {                
-   pinMode(led, OUTPUT);   
-}
-
-void loop() {
-   *gpio_out |= (1 << led);
-   *gpio_out ^= (1 << led);
-}
 ```
 
-Y en este último caso la frecuencia del osciloscopio es de **4.701 Mhz**.
+Y en este último caso la frecuencia del osciloscopio es de **4.7 MHz**.
 
 
 ## **5. Diagrama de flujo i diagrama de tiempo:**
@@ -199,12 +197,12 @@ Y en este último caso la frecuencia del osciloscopio es de **4.701 Mhz**.
 
 ```mermaid
 graph TD;
-    A[Inicio] --> |Inicio| B[Setup];
-    B[Setup] --> |Indicar salida| C{led encendido};
-    C{led encendido} --> |Encendido| D[Delay 500ms];
-    D[Delay 500ms] --> |Apagar| E{led apagado};
-    E{led apagado} --> |Delay| D[Delay 500ms];
-    E{led apagado} --> |Repetir| F[Finalizar];
+    A[Inicio] --> |Inizializa| B[Setup];
+    B[Setup] --> |Establece salida| C{led encendido ON};
+    C{led encendido ON} --> |Enciende led| D[Delay 0,5s];
+    D[Delay 0,5s] --> |Apaga led| E{led apagado OFF};
+    E{led apagado OFF} --> |Delay 500ms| D[Delay 0,5s];
+    E{led apagado OFF} --> |Repetir proceso| F[Finalizar];
 
 ```
 En este diagrama de flujo vemos que primero se inicia y se especifica la salida, después al encenderse el led pasa el tiempo del delay y se apaga, y una vez que ya se ha apagado vuelve a pasar el mismo tiempo de delay y el led se vuelve a encender.
@@ -219,8 +217,7 @@ sequenceDiagram
     participant LED
     participant Delay
 
-    Arduino->>Arduino: #define LED_BUILTIN 2
-    Arduino->>Arduino: #define DELAY 500
+
     Arduino->>LED: pinMode(LED_BUILTIN, PUERTO_SALIDA)
     loop
         Arduino->>LED: digitalWrite(LED_BUILTIN, ENCENDIDO)
@@ -234,6 +231,10 @@ sequenceDiagram
 
 
 ## **6. Tiempo libre del procesador:**
+
+Podriamos definir el tiempo libre del procesador con la siguiente formula.
+
+Tiempo libre del procesador = tiempo total de un ciclo -  tiempo ocupado en la ejecución del bucle
 
 
 
